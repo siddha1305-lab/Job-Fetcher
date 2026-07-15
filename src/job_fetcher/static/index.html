@@ -193,7 +193,20 @@
 
   <script>
     const state = { jobs: [], visible: 30, meta: null };
-    const els = Object.fromEntries(["search", "source", "remote", "jobs", "notice", "load-more", "job-count", "board-count", "result-summary", "status-dot", "status-text"].map(id => [id, document.getElementById(id)]));
+    const byId = id => document.getElementById(id);
+    const els = {
+      search: byId("search"),
+      source: byId("source"),
+      remote: byId("remote"),
+      jobs: byId("jobs"),
+      notice: byId("notice"),
+      loadMore: byId("load-more"),
+      jobCount: byId("job-count"),
+      boardCount: byId("board-count"),
+      resultSummary: byId("result-summary"),
+      statusDot: byId("status-dot"),
+      statusText: byId("status-text")
+    };
 
     function formatDate(value) {
       if (!value) return "";
