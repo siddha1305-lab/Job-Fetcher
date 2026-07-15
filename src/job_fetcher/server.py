@@ -6,6 +6,7 @@ import signal
 import threading
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib.resources import files
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -13,6 +14,8 @@ from .boards import BOARDS
 from .fetchers import fetch_all
 from .models import Job
 from .pipeline import deduplicate
+
+INDEX_HTML = files("job_fetcher").joinpath("static/index.html").read_bytes()
 
 
 class JobState:
@@ -104,15 +107,25 @@ class JobState:
 class JobRequestHandler(BaseHTTPRequestHandler):
     state: JobState
 
-    def _send_json(self, payload: dict[str, Any], status: int = 200) -> None:
-        body = json.dumps(payload, ensure_ascii=False).encode()
+    def _send_body(
+        self, body: bytes, content_type: str, status: int = 200
+    ) -> None:
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_json(self, payload: dict[str, Any], status: int = 200) -> None:
+        self._send_body(
+            json.dumps(payload, ensure_ascii=False).encode(),
+            "application/json; charset=utf-8",
+            status,
+        )
 
     def do_GET(self) -> None:
         path = urlsplit(self.path).path.rstrip("/") or "/"
@@ -133,15 +146,9 @@ class JobRequestHandler(BaseHTTPRequestHandler):
             self._send_json(self.state.snapshot())
             return
         if path == "/":
-            self._send_json(
-                {
-                    "name": "VC Job Fetcher",
-                    "description": (
-                        "Deduplicated software engineering jobs from 15 VC "
-                        "portfolio boards"
-                    ),
-                    "endpoints": {"jobs": "/jobs", "health": "/health"},
-                }
+            self._send_body(
+                INDEX_HTML,
+                "text/html; charset=utf-8",
             )
             return
         self._send_json({"error": "not found"}, status=404)
