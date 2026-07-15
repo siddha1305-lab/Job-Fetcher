@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vc-job-fetcher"
+version = "0.1.0"
+description = "Fetch and deduplicate software engineering jobs from VC portfolio boards"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Job Fetcher contributors" }]
+dependencies = []
+
+[project.scripts]
+job-fetcher = "job_fetcher.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
