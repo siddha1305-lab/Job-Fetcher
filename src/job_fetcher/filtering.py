@@ -7,7 +7,8 @@ import unicodedata
 SOFTWARE_TITLE = re.compile(
     r"\b("
     r"software|developer|programmer|full[\s-]?stack|front[\s-]?end|back[\s-]?end|"
-    r"mobile|ios|android|devops|site reliability|sre|platform engineer|"
+    r"(?:mobile|ios|android)(?: software)? (?:engineer|developer)|"
+    r"devops|site reliability|sre|platform engineer|"
     r"cloud engineer|infrastructure engineer|application engineer|"
     r"engineering manager|quality (?:assurance|engineer)|test automation"
     r")\b",
@@ -18,7 +19,7 @@ NON_SOFTWARE_TITLE = re.compile(
     r"\b("
     r"sales|solutions?|support|customer|mechanical|electrical|hardware|"
     r"manufacturing|civil|chemical|field|network|security guard|"
-    r"recruit|marketing"
+    r"recruit|marketing|advocate|evangelist|developer relations"
     r")\b",
     re.IGNORECASE,
 )

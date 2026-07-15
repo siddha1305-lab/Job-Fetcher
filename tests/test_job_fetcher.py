@@ -39,6 +39,8 @@ class FilteringTests(unittest.TestCase):
             "Solutions Engineer",
             "Mechanical Engineer",
             "Account Executive",
+            "Principal Developer Advocate",
+            "Mobile Product Manager",
         ]
         self.assertTrue(all(is_software_engineering_title(x) for x in accepted))
         self.assertFalse(any(is_software_engineering_title(x) for x in rejected))
