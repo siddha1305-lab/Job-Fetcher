@@ -12,6 +12,7 @@ class Job:
     locations: list[str]
     url: str
     source_firms: list[str]
+    logo_url: str | None = None
     posted_at: str | None = None
     remote: bool = False
     fetched_at: str = field(

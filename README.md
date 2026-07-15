@@ -103,9 +103,10 @@ GET /health    deployment and refresh health
 GET /jobs      metadata, board errors, and deduplicated jobs
 ```
 
-The web interface provides free-text search, portfolio and remote-work filters,
-responsive job cards, and direct application links. It is served by the same
-Python process as the API, so no separate frontend service is required.
+The web interface provides company logos with initials fallbacks, free-text
+search, portfolio and remote-work filters, responsive job cards, and direct
+application links. It is served by the same Python process as the API, so no
+separate frontend service is required.
 
 To use the JSON API directly:
 

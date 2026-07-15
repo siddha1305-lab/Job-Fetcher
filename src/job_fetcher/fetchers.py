@@ -82,6 +82,30 @@ def _timestamp(value: Any) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
+def _logo_url(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value if urlsplit(value).scheme in {"http", "https"} else None
+
+
+def _consider_logo(raw: dict[str, Any]) -> str | None:
+    direct = _logo_url(raw.get("companyLogo") or raw.get("logoUrl"))
+    if direct:
+        return direct
+    logos = raw.get("companyLogos") or {}
+    if not isinstance(logos, dict):
+        return None
+    for source in ("manual", "linkedin", "clearbit", "crunchbase"):
+        candidate = logos.get(source)
+        if isinstance(candidate, dict):
+            candidate = candidate.get("src") or candidate.get("url")
+        logo = _logo_url(candidate)
+        if logo:
+            return logo
+    return None
+
+
 def _parse_getro_job(raw: dict[str, Any], board: Board) -> Job:
     organization = raw.get("organization") or {}
     locations = [str(value) for value in raw.get("locations") or []]
@@ -91,6 +115,7 @@ def _parse_getro_job(raw: dict[str, Any], board: Board) -> Job:
         locations=locations,
         url=str(raw.get("url") or ""),
         source_firms=[board.name],
+        logo_url=_logo_url(organization.get("logoUrl")),
         posted_at=_timestamp(raw.get("createdAt")),
         remote=raw.get("workMode") == "remote"
         or any("remote" in value.casefold() for value in locations),
@@ -128,6 +153,7 @@ def _parse_consider_job(raw: dict[str, Any], board: Board) -> Job:
         locations=locations,
         url=str(raw.get("applyUrl") or raw.get("url") or ""),
         source_firms=[board.name],
+        logo_url=_consider_logo(raw),
         posted_at=_timestamp(
             raw.get("postedAt") or raw.get("createdAt") or raw.get("publishedAt")
         ),

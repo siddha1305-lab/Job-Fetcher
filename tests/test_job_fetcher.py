@@ -12,6 +12,7 @@ from job_fetcher.filtering import (
     is_software_engineering_title,
     matches_location,
 )
+from job_fetcher.fetchers import _parse_consider_job, _parse_getro_job
 from job_fetcher.models import Job
 from job_fetcher.pipeline import deduplicate, write_csv, write_json
 from job_fetcher.server import INDEX_HTML, JobRequestHandler, JobState
@@ -22,6 +23,7 @@ def job(
     title: str,
     source: str,
     locations: list[str] | None = None,
+    logo_url: str | None = None,
 ) -> Job:
     return Job(
         company=company,
@@ -29,6 +31,7 @@ def job(
         locations=locations or ["London, UK"],
         url=f"https://example.com/{source}",
         source_firms=[source],
+        logo_url=logo_url,
     )
 
 
@@ -73,6 +76,7 @@ class PipelineTests(unittest.TestCase):
                     "Senior Software Engineer",
                     "a16z",
                     ["Edinburgh, Scotland"],
+                    "https://cdn.example.com/acme.png",
                 ),
                 job("Acme", "Backend Developer", "Accel"),
             ]
@@ -82,6 +86,9 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(merged.source_firms, ["a16z", "Accel"])
         self.assertEqual(
             merged.locations, ["Edinburgh, Scotland", "London, UK"]
+        )
+        self.assertEqual(
+            merged.logo_url, "https://cdn.example.com/acme.png"
         )
 
     def test_writes_json_and_csv(self) -> None:
@@ -110,6 +117,60 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(select_boards(["Accel"])[0].name, "Accel")
         with self.assertRaises(ValueError):
             select_boards(["Not a firm"])
+
+
+class FetcherTests(unittest.TestCase):
+    def test_getro_job_includes_company_logo(self) -> None:
+        parsed = _parse_getro_job(
+            {
+                "organization": {
+                    "name": "Acme",
+                    "logoUrl": "https://cdn.example.com/acme.png",
+                },
+                "title": "Software Engineer",
+                "locations": ["London, UK"],
+                "url": "https://example.com/job",
+            },
+            BOARDS[0],
+        )
+        self.assertEqual(
+            parsed.logo_url, "https://cdn.example.com/acme.png"
+        )
+
+    def test_consider_job_prefers_manual_company_logo(self) -> None:
+        parsed = _parse_consider_job(
+            {
+                "companyName": "Acme",
+                "companyLogos": {
+                    "manual": {"src": "https://cdn.example.com/manual.png"},
+                    "linkedin": {
+                        "src": "https://cdn.example.com/linkedin.png"
+                    },
+                },
+                "title": "Software Engineer",
+                "locations": ["London, UK"],
+                "applyUrl": "https://example.com/job",
+            },
+            BOARDS[1],
+        )
+        self.assertEqual(
+            parsed.logo_url, "https://cdn.example.com/manual.png"
+        )
+
+    def test_non_http_logo_is_discarded(self) -> None:
+        parsed = _parse_getro_job(
+            {
+                "organization": {
+                    "name": "Acme",
+                    "logoUrl": "data:image/png;base64,unsafe",
+                },
+                "title": "Software Engineer",
+                "locations": ["London, UK"],
+                "url": "https://example.com/job",
+            },
+            BOARDS[0],
+        )
+        self.assertIsNone(parsed.logo_url)
 
 
 class ServerTests(unittest.TestCase):
