@@ -25,6 +25,8 @@ def deduplicate(jobs: list[Job]) -> list[Job]:
             key=str.casefold,
         )
         current.remote = current.remote or job.remote
+        if not current.logo_url and job.logo_url:
+            current.logo_url = job.logo_url
         if not current.posted_at and job.posted_at:
             current.posted_at = job.posted_at
     return sorted(
@@ -50,6 +52,7 @@ def write_csv(jobs: list[Job], path: Path) -> None:
             fieldnames=(
                 "company",
                 "title",
+                "logo_url",
                 "locations",
                 "remote",
                 "url",

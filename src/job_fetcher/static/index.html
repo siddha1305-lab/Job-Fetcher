@@ -106,6 +106,15 @@
       background: var(--card); transition: transform .15s, border-color .15s, box-shadow .15s;
     }
     .job-card:hover { transform: translateY(-2px); border-color: #a9b8af; box-shadow: var(--shadow); }
+    .job-main { display: flex; align-items: flex-start; gap: 15px; min-width: 0; }
+    .job-copy { min-width: 0; }
+    .logo-wrap {
+      flex: 0 0 48px; width: 48px; height: 48px; display: grid; place-items: center;
+      overflow: hidden; border: 1px solid var(--line); border-radius: 12px;
+      color: var(--accent); background: #fff; font-size: 14px; font-weight: 900;
+      letter-spacing: -.02em;
+    }
+    .company-logo { width: 100%; height: 100%; padding: 5px; object-fit: contain; }
     .company { margin-bottom: 7px; color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
     .job-title { margin: 0; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
     .meta, .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -145,6 +154,7 @@
       .hero-stat strong { font-size: 38px; }
       .filters { position: static; grid-template-columns: 1fr; }
       .job-card { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+      .logo-wrap { flex-basis: 42px; width: 42px; height: 42px; border-radius: 10px; }
       .tags { justify-content: flex-start; max-width: none; }
       .results-head { align-items: flex-start; flex-direction: column; gap: 6px; }
       nav .status span:last-child { display: none; }
@@ -226,7 +236,29 @@
     function jobCard(job) {
       const card = document.createElement("article");
       card.className = "job-card";
+      const main = document.createElement("div");
+      main.className = "job-main";
+      const logoWrap = document.createElement("div");
+      logoWrap.className = "logo-wrap";
+      const initials = job.company.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join("").toLocaleUpperCase() || "?";
+      const fallback = addText(logoWrap, "span", "logo-fallback", initials);
+      if (job.logo_url) {
+        const logo = document.createElement("img");
+        logo.className = "company-logo";
+        logo.src = job.logo_url;
+        logo.alt = `${job.company} logo`;
+        logo.loading = "lazy";
+        logo.referrerPolicy = "no-referrer";
+        fallback.hidden = true;
+        logo.addEventListener("error", () => {
+          logo.remove();
+          fallback.hidden = false;
+        });
+        logoWrap.appendChild(logo);
+      }
+      main.appendChild(logoWrap);
       const body = document.createElement("div");
+      body.className = "job-copy";
       addText(body, "div", "company", job.company);
       addText(body, "h3", "job-title", job.title);
       const meta = document.createElement("div");
@@ -236,7 +268,8 @@
       const posted = formatDate(job.posted_at);
       if (posted) addText(meta, "span", "", `Posted ${posted}`);
       body.appendChild(meta);
-      card.appendChild(body);
+      main.appendChild(body);
+      card.appendChild(main);
 
       const tags = document.createElement("div");
       tags.className = "tags";
