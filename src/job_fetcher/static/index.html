@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software engineering roles at venture-backed companies in the United Kingdom.">
+  <title>VC Job Finder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #12211b;
+      --muted: #63736c;
+      --paper: #f4f1e8;
+      --card: #fffdf7;
+      --line: #d9ddd3;
+      --accent: #145c43;
+      --accent-light: #dff2e8;
+      --warm: #e7683f;
+      --shadow: 0 14px 40px rgba(25, 45, 36, .09);
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 86% 3%, rgba(231, 104, 63, .15), transparent 24rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 28px 0 18px; }
+    nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.03em; }
+    .brand-mark {
+      width: 34px; height: 34px; display: grid; place-items: center;
+      border-radius: 10px; color: white; background: var(--accent);
+      box-shadow: 4px 4px 0 var(--warm);
+    }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #a8b3ae; }
+    .status-dot.live { background: #28a36a; box-shadow: 0 0 0 4px rgba(40, 163, 106, .12); }
+
+    .hero {
+      display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(250px, .5fr);
+      gap: 40px; align-items: end; padding: 62px 0 48px;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;
+      color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 25px; height: 2px; background: currentColor; }
+    h1 {
+      max-width: 780px; margin: 0; font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(48px, 7vw, 88px); font-weight: 500; line-height: .95; letter-spacing: -.055em;
+    }
+    h1 em { color: var(--accent); font-weight: inherit; }
+    .intro { margin: 22px 0 0; max-width: 660px; color: var(--muted); font-size: 18px; line-height: 1.6; }
+    .hero-stat { padding: 22px 0 4px 28px; border-left: 1px solid var(--line); }
+    .hero-stat strong { display: block; font-family: Georgia, serif; font-size: 52px; font-weight: 500; line-height: 1; }
+    .hero-stat span { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; }
+
+    .filters {
+      position: sticky; top: 12px; z-index: 5; display: grid;
+      grid-template-columns: minmax(240px, 1.7fr) minmax(180px, 1fr) auto;
+      gap: 12px; padding: 14px; margin-bottom: 28px;
+      border: 1px solid rgba(217, 221, 211, .9); border-radius: 18px;
+      background: rgba(255, 253, 247, .88); backdrop-filter: blur(14px); box-shadow: var(--shadow);
+    }
+    .control { position: relative; }
+    .control label {
+      position: absolute; top: 8px; left: 15px; color: var(--muted);
+      font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      pointer-events: none;
+    }
+    .control input, .control select {
+      width: 100%; height: 58px; padding: 22px 42px 7px 15px;
+      color: var(--ink); border: 1px solid var(--line); border-radius: 12px;
+      outline: none; background: #fff; transition: border-color .15s, box-shadow .15s;
+    }
+    .control input:focus, .control select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(20, 92, 67, .1);
+    }
+    .remote-filter {
+      display: flex; align-items: center; gap: 9px; height: 58px; padding: 0 18px;
+      border: 1px solid var(--line); border-radius: 12px; background: #fff;
+      font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer;
+    }
+    .remote-filter input { width: 17px; height: 17px; accent-color: var(--accent); }
+
+    .results-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 20px; margin-bottom: 14px;
+    }
+    h2 { margin: 0; font-family: Georgia, serif; font-size: 28px; font-weight: 500; }
+    #result-summary { color: var(--muted); font-size: 14px; }
+    .job-list { display: grid; gap: 12px; padding-bottom: 30px; }
+    .job-card {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px;
+      padding: 24px; border: 1px solid var(--line); border-radius: 16px;
+      background: var(--card); transition: transform .15s, border-color .15s, box-shadow .15s;
+    }
+    .job-card:hover { transform: translateY(-2px); border-color: #a9b8af; box-shadow: var(--shadow); }
+    .company { margin-bottom: 7px; color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .job-title { margin: 0; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
+    .meta, .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .meta { margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .meta span + span::before { content: "·"; margin-right: 8px; color: #aeb7b2; }
+    .tags { justify-content: flex-end; align-content: center; max-width: 330px; }
+    .tag { padding: 7px 10px; border-radius: 999px; background: #edf0eb; color: #4c5d55; font-size: 11px; font-weight: 700; }
+    .tag.remote { background: var(--accent-light); color: var(--accent); }
+    .apply {
+      align-self: center; display: inline-flex; align-items: center; gap: 6px;
+      margin-left: 4px; padding: 9px 13px; border-radius: 999px;
+      color: white; background: var(--accent); font-size: 12px; font-weight: 800;
+      text-decoration: none; transition: background .15s;
+    }
+    .apply:hover { background: #0c4934; }
+    .apply::after { content: "↗"; }
+
+    .notice, .empty {
+      padding: 38px 24px; border: 1px dashed #b9c1bc; border-radius: 16px;
+      color: var(--muted); text-align: center; background: rgba(255,255,255,.35);
+    }
+    .notice strong, .empty strong { display: block; margin-bottom: 7px; color: var(--ink); font-size: 17px; }
+    .loader { width: 24px; height: 24px; margin: 0 auto 14px; border: 3px solid #ced6d1; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #load-more {
+      display: none; margin: 2px auto 60px; padding: 12px 20px;
+      border: 1px solid var(--accent); border-radius: 999px; color: var(--accent);
+      background: transparent; font-weight: 800; cursor: pointer;
+    }
+    #load-more:hover { color: white; background: var(--accent); }
+    footer { padding: 30px 0 45px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 24px, 1180px); }
+      .hero { grid-template-columns: 1fr; gap: 24px; padding: 42px 0 32px; }
+      .hero-stat { padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+      .hero-stat strong { font-size: 38px; }
+      .filters { position: static; grid-template-columns: 1fr; }
+      .job-card { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+      .tags { justify-content: flex-start; max-width: none; }
+      .results-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+      nav .status span:last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="shell">
+    <nav>
+      <div class="brand"><span class="brand-mark">V</span> VC Job Finder</div>
+      <div class="status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span><span>· United Kingdom</span></div>
+    </nav>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Curated from leading portfolios</div>
+        <h1>Build what comes <em>next.</em></h1>
+        <p class="intro">Software engineering opportunities from companies backed by Accel, a16z, Sequoia, Lightspeed, and eleven more leading venture firms.</p>
+      </div>
+      <div class="hero-stat"><strong id="job-count">—</strong><span>open roles, deduplicated across <b id="board-count">15</b> portfolios</span></div>
+    </section>
+  </header>
+
+  <main class="shell">
+    <section class="filters" aria-label="Job filters">
+      <div class="control">
+        <label for="search">Search roles or companies</label>
+        <input id="search" type="search" placeholder="Try backend, Python, Monzo…" autocomplete="off">
+      </div>
+      <div class="control">
+        <label for="source">Portfolio</label>
+        <select id="source"><option value="">All VC firms</option></select>
+      </div>
+      <label class="remote-filter"><input id="remote" type="checkbox"> Remote options</label>
+    </section>
+
+    <div class="results-head">
+      <h2>Latest opportunities</h2>
+      <span id="result-summary">Loading roles…</span>
+    </div>
+    <div id="notice" class="notice"><div class="loader"></div><strong>Fetching fresh opportunities</strong>This usually takes less than 30 seconds.</div>
+    <section id="jobs" class="job-list" aria-live="polite"></section>
+    <button id="load-more" type="button">Show more roles</button>
+  </main>
+
+  <footer><div class="shell">Roles link directly to each company's application page. Data refreshes every 12 hours.</div></footer>
+
+  <script>
+    const state = { jobs: [], visible: 30, meta: null };
+    const els = Object.fromEntries(["search", "source", "remote", "jobs", "notice", "load-more", "job-count", "board-count", "result-summary", "status-dot", "status-text"].map(id => [id, document.getElementById(id)]));
+
+    function formatDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(date);
+    }
+
+    function addText(parent, tag, className, text) {
+      const element = document.createElement(tag);
+      element.className = className;
+      element.textContent = text;
+      parent.appendChild(element);
+      return element;
+    }
+
+    function jobCard(job) {
+      const card = document.createElement("article");
+      card.className = "job-card";
+      const body = document.createElement("div");
+      addText(body, "div", "company", job.company);
+      addText(body, "h3", "job-title", job.title);
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const locations = (job.locations || []).filter(Boolean);
+      addText(meta, "span", "", locations.slice(0, 2).join(" · ") || "Location not specified");
+      const posted = formatDate(job.posted_at);
+      if (posted) addText(meta, "span", "", `Posted ${posted}`);
+      body.appendChild(meta);
+      card.appendChild(body);
+
+      const tags = document.createElement("div");
+      tags.className = "tags";
+      if (job.remote) addText(tags, "span", "tag remote", "Remote");
+      (job.source_firms || []).slice(0, 2).forEach(source => addText(tags, "span", "tag", source));
+      const apply = addText(tags, "a", "apply", "View role");
+      apply.href = job.url;
+      apply.target = "_blank";
+      apply.rel = "noopener noreferrer";
+      card.appendChild(tags);
+      return card;
+    }
+
+    function filteredJobs() {
+      const query = els.search.value.trim().toLocaleLowerCase();
+      const source = els.source.value;
+      return state.jobs.filter(job => {
+        const text = `${job.title} ${job.company} ${(job.locations || []).join(" ")}`.toLocaleLowerCase();
+        return (!query || text.includes(query))
+          && (!source || (job.source_firms || []).includes(source))
+          && (!els.remote.checked || job.remote);
+      });
+    }
+
+    function render() {
+      const jobs = filteredJobs();
+      els.jobs.replaceChildren(...jobs.slice(0, state.visible).map(jobCard));
+      els.resultSummary.textContent = `${jobs.length.toLocaleString()} matching ${jobs.length === 1 ? "role" : "roles"}`;
+      els.loadMore.style.display = jobs.length > state.visible ? "block" : "none";
+      if (!jobs.length && state.jobs.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        addText(empty, "strong", "", "No roles match those filters");
+        empty.append("Try a broader search or another portfolio.");
+        els.jobs.appendChild(empty);
+      }
+    }
+
+    function populateSources() {
+      const sources = [...new Set(state.jobs.flatMap(job => job.source_firms || []))].sort();
+      sources.forEach(source => {
+        const option = document.createElement("option");
+        option.value = option.textContent = source;
+        els.source.appendChild(option);
+      });
+    }
+
+    async function loadJobs() {
+      try {
+        const response = await fetch("/jobs", { cache: "no-store" });
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const data = await response.json();
+        state.meta = data;
+        els.jobCount.textContent = data.job_count.toLocaleString();
+        els.boardCount.textContent = data.successful_board_count;
+        if (data.refreshing && !data.jobs.length) {
+          els.statusText.textContent = "Refreshing";
+          setTimeout(loadJobs, 2500);
+          return;
+        }
+        state.jobs = data.jobs;
+        els.notice.hidden = true;
+        els.statusDot.classList.add("live");
+        els.statusText.textContent = data.refreshing ? "Updating" : "Up to date";
+        populateSources();
+        render();
+      } catch (error) {
+        els.notice.replaceChildren();
+        addText(els.notice, "strong", "", "Jobs could not be loaded");
+        els.notice.append(`${error.message}. Please refresh in a moment.`);
+        els.statusText.textContent = "Unavailable";
+      }
+    }
+
+    [els.search, els.source, els.remote].forEach(element => element.addEventListener("input", () => {
+      state.visible = 30;
+      render();
+    }));
+    els.loadMore.addEventListener("click", () => { state.visible += 30; render(); });
+    loadJobs();
+  </script>
+</body>
+</html>

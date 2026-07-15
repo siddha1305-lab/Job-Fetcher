@@ -1,7 +1,10 @@
 import tempfile
+import threading
 import unittest
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
+from urllib.request import urlopen
 
 from job_fetcher.boards import BOARDS, select_boards
 from job_fetcher.filtering import (
@@ -11,7 +14,7 @@ from job_fetcher.filtering import (
 )
 from job_fetcher.models import Job
 from job_fetcher.pipeline import deduplicate, write_csv, write_json
-from job_fetcher.server import JobState
+from job_fetcher.server import INDEX_HTML, JobRequestHandler, JobState
 
 
 def job(
@@ -145,6 +148,34 @@ class ServerTests(unittest.TestCase):
         snapshot = state.snapshot()
         self.assertEqual(snapshot["job_count"], 1)
         self.assertEqual(snapshot["errors"], {"refresh": "upstream unavailable"})
+
+    def test_root_serves_packaged_web_interface(self) -> None:
+        state = JobState(
+            location="United Kingdom",
+            refresh_interval=60,
+            workers=2,
+            timeout=5,
+        )
+        JobRequestHandler.state = state
+        server = ThreadingHTTPServer(("127.0.0.1", 0), JobRequestHandler)
+        thread = threading.Thread(target=server.serve_forever)
+        thread.start()
+        try:
+            with urlopen(
+                f"http://127.0.0.1:{server.server_port}/", timeout=5
+            ) as response:
+                body = response.read()
+                self.assertEqual(response.status, 200)
+                self.assertEqual(
+                    response.headers.get_content_type(), "text/html"
+                )
+            self.assertEqual(body, INDEX_HTML)
+            self.assertIn(b'id="search"', body)
+            self.assertIn(b'fetch("/jobs"', body)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
 
 
 if __name__ == "__main__":
