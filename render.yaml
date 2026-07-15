@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: vc-job-fetcher
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install .
+    startCommand: job-fetcher-server
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: JOB_LOCATION
+        value: United Kingdom
+      - key: REFRESH_INTERVAL_SECONDS
+        value: "43200"
+      - key: FETCH_WORKERS
+        value: "6"
+      - key: FETCH_TIMEOUT_SECONDS
+        value: "30"
