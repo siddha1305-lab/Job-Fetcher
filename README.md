@@ -82,6 +82,52 @@ date when supplied, remote status, fetch time, and every VC board where the
 role appeared. If one third-party board is unavailable, the other boards still
 produce output and the failed board is reported as a warning.
 
+## Deploy on Render
+
+The included `render.yaml` deploys the fetcher as a Python web service in
+Render's Frankfurt region. It starts refreshing immediately and then refreshes
+every 12 hours.
+
+1. Merge this repository's deployment changes into the default branch.
+2. Open the [Render Blueprint deployment page][render-deploy].
+3. Connect the GitHub repository and approve the `vc-job-fetcher` service.
+4. Wait for `/health` to pass, then open the generated `onrender.com` URL.
+
+[render-deploy]: https://render.com/deploy?repo=https://github.com/siddha1305-lab/Job-Fetcher
+
+API endpoints:
+
+```text
+GET /          service information
+GET /health    deployment and refresh health
+GET /jobs      metadata, board errors, and deduplicated jobs
+```
+
+For example:
+
+```bash
+curl https://YOUR-SERVICE.onrender.com/jobs
+```
+
+The Blueprint defaults to Render's free plan. Free web services sleep when
+idle, so a request after an idle period can have a cold start. The process
+refreshes stale data when it wakes, and `/jobs` can briefly return an empty
+snapshot with `"refreshing": true` during the first fetch. Use a paid,
+always-on instance if the 12-hour refresh schedule must run at exact times.
+
+The service keeps its current snapshot in memory because Render's service
+filesystem is ephemeral. A restarted instance rebuilds that snapshot from the
+portfolio boards; no generated jobs file needs to be deployed.
+
+To change deployment behavior in the Render dashboard, set:
+
+```text
+JOB_LOCATION=United Kingdom
+REFRESH_INTERVAL_SECONDS=43200
+FETCH_WORKERS=6
+FETCH_TIMEOUT_SECONDS=30
+```
+
 ## Deduplication
 
 Company names and titles are lowercased, Unicode-normalized, stripped of

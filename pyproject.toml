@@ -14,6 +14,7 @@ dependencies = []
 
 [project.scripts]
 job-fetcher = "job_fetcher.cli:main"
+job-fetcher-server = "job_fetcher.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

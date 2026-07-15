@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from job_fetcher.boards import BOARDS, select_boards
 from job_fetcher.filtering import (
@@ -10,6 +11,7 @@ from job_fetcher.filtering import (
 )
 from job_fetcher.models import Job
 from job_fetcher.pipeline import deduplicate, write_csv, write_json
+from job_fetcher.server import JobState
 
 
 def job(
@@ -105,6 +107,44 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(select_boards(["Accel"])[0].name, "Accel")
         with self.assertRaises(ValueError):
             select_boards(["Not a firm"])
+
+
+class ServerTests(unittest.TestCase):
+    def test_refresh_populates_api_snapshot(self) -> None:
+        state = JobState(
+            location="United Kingdom",
+            refresh_interval=60,
+            workers=2,
+            timeout=5,
+        )
+        fetched = [job("Acme", "Software Engineer", "Accel")]
+        with patch("job_fetcher.server.fetch_all", return_value=(fetched, {})):
+            state.refresh()
+        snapshot = state.snapshot()
+        self.assertEqual(snapshot["job_count"], 1)
+        self.assertEqual(snapshot["jobs"][0]["company"], "Acme")
+        self.assertEqual(snapshot["successful_board_count"], 15)
+        self.assertIsNotNone(snapshot["last_refreshed"])
+        self.assertFalse(snapshot["refreshing"])
+
+    def test_total_refresh_failure_preserves_previous_snapshot(self) -> None:
+        state = JobState(
+            location="United Kingdom",
+            refresh_interval=60,
+            workers=2,
+            timeout=5,
+        )
+        fetched = [job("Acme", "Software Engineer", "Accel")]
+        with patch("job_fetcher.server.fetch_all", return_value=(fetched, {})):
+            state.refresh()
+        with patch(
+            "job_fetcher.server.fetch_all",
+            side_effect=RuntimeError("upstream unavailable"),
+        ):
+            state.refresh()
+        snapshot = state.snapshot()
+        self.assertEqual(snapshot["job_count"], 1)
+        self.assertEqual(snapshot["errors"], {"refresh": "upstream unavailable"})
 
 
 if __name__ == "__main__":
